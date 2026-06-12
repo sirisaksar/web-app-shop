@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ</title>
+    <style>
+        /* ใช้สไตล์ที่สะอาดตาและเข้ากับหน้าสมัครสมาชิก */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .login-card {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4b5563;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #10b981; /* เปลี่ยนสีปุ่มเป็นสีเขียวเพื่อให้ต่างจากสมัครสมาชิก */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #059669;
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        .register-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        .message-box {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        .success { background-color: #d1fae5; color: #065f46; display: block; }
+        .error { background-color: #fee2e2; color: #991b1b; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>เข้าสู่ระบบ</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">อีเมล (Email)</label>
+                <input type="email" id="email" required placeholder="example@email.com">
+            </div>
+            <div class="form-group">
+                <label for="password">รหัสผ่าน (Password)</label>
+                <input type="password" id="password" required placeholder="••••••••">
+            </div>
+            <button type="submit">เข้าสู่ระบบ</button>
+        </form>
+
+        <div class="register-link">
+            ยังไม่มีบัญชีใช่ไหม? <a href="register.html">สมัครสมาชิกที่นี่</a>
+        </div>
+        
+        <div id="messageBox" class="message-box"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const msgBox = document.getElementById('messageBox');
+            msgBox.className = 'message-box';
+            msgBox.textContent = 'กำลังตรวจสอบข้อมูล...';
+            msgBox.style.display = 'block';
+
+            // 1. ดึงข้อมูลจากฟอร์ม
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                // 2. ยิง API ไปที่เซิร์ฟเวอร์ Backend สำหรับการเข้าสู่ระบบ
+                // หมายเหตุ: เช็กว่า Endpoint ของคุณใช้ /login หรือไม่ แล้วปรับให้ตรงกัน
+                const response = await fetch('http://localhost:5000/api/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                // 3. ตรวจสอบผลลัพธ์
+                if (response.ok) {
+                    msgBox.textContent = 'เข้าสู่ระบบสำเร็จ! กำลังพาไปยังหน้าหลัก...';
+                    msgBox.classList.add('success');
+                    
+                    // สมมติว่า Backend ส่ง Token กลับมาในชื่อ result.token 
+                    // ให้บันทึก Token ไว้ใช้ยืนยันตัวตนในหน้าอื่นๆ
+                    if(result.token) {
+                        localStorage.setItem('authToken', result.token);
+                    }
+
+                    // สมมติว่าส่งข้อมูล Role กลับมาด้วย ก็สามารถเก็บไว้เช็กสิทธิ์หน้าเว็บได้
+                    if(result.role) {
+                        localStorage.setItem('userRole', result.role);
+                    }
+
+                    // หน่วงเวลา 1.5 วินาที แล้วพาผู้ใช้ไปหน้า Dashboard หรือหน้าแรก
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // เปลี่ยน URL ให้เป็นหน้าหลักของคุณ
+                    }, 1500);
+
+                } else {
+                    // กรณีรหัสผ่านผิด หรือไม่มีอีเมลนี้ในระบบ
+                    msgBox.textContent = result.error || result.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+                    msgBox.classList.add('error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                msgBox.textContent = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาเช็กว่า Backend (Port 5000) ทำงานอยู่หรือไม่';
+                msgBox.classList.add('error');
+            }
+        });
+    </script>
+
+</body>
+</html>
